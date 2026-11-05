@@ -1,4 +1,3 @@
-
 name: NxNative - Generic IPA Builder
 
 on:
@@ -417,6 +416,8 @@ jobs:
 
       - name: Update shader toolchain lock and header
         shell: bash
+        env:
+          DM_GAME: ${{ env.DM_GAME }}
         run: |
           set -euo pipefail
           echo "Preparing shader toolchain for profile $DM_GAME"
