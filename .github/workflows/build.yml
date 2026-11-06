@@ -372,7 +372,8 @@ jobs:
           OUTPUT="$RUNNER_TEMP/NxNative.ipa"
           python scripts/build_ipa_from_nsp.py \
             "$GAME_DIR" \
-            -k "$WORK/prod.keys"
+            -k "$WORK/prod.keys" \
+            --allow-other-metal
           IPA="$(find "$GAME_DIR" -maxdepth 1 -name '*.ipa' -print -quit)"
           if [[ -z "$IPA" ]]; then
             echo "::error::IPA build did not produce an output file."
