@@ -68,14 +68,28 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          echo "Disk space before cleanup:"
+          df -h /
           echo "Xcode versions on this runner:"
           ls -d /Applications/Xcode*.app
-          XCODE="$(ls -d /Applications/Xcode*.app | sort -V | tail -1)"
+          # Prefer the final 27.2 release over the release candidate
+          XCODE="/Applications/Xcode_27.2.app"
+          if [[ ! -d "$XCODE" ]]; then
+            XCODE="$(ls -d /Applications/Xcode*.app | grep -vi candidate | sort -V | tail -1)"
+          fi
           echo "Using: $XCODE"
           sudo xcode-select -s "$XCODE/Contents/Developer"
           xcodebuild -version
+          # Free disk space: delete every other Xcode (each one is many GB)
+          KEEP="$(realpath "$XCODE")"
+          for app in /Applications/Xcode*.app; do
+            if [[ "$app" != "$XCODE" && "$(realpath "$app")" != "$KEEP" ]]; then
+              sudo rm -rf "$app"
+            fi
+          done
+          echo "Disk space after cleanup:"
+          df -h /
           xcodebuild -downloadComponent MetalToolchain || echo "Metal toolchain download skipped or already installed"
-          xcodebuild -downloadPlatform iOS || echo "iOS platform download skipped or already installed"
 
       - name: Download game files and keys
         env:
