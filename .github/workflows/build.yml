@@ -387,7 +387,8 @@ jobs:
           python scripts/build_ipa_from_nsp.py \
             "$GAME_DIR" \
             -k "$WORK/prod.keys" \
-            --allow-other-metal
+            --allow-other-metal \
+            --romfs separate
           IPA="$(find "$GAME_DIR" -maxdepth 1 -name '*.ipa' -print -quit)"
           if [[ -z "$IPA" ]]; then
             echo "::error::IPA build did not produce an output file."
@@ -405,6 +406,27 @@ jobs:
           path: ${{ runner.temp }}/NxNative.ipa
           if-no-files-found: error
           retention-days: 7
+
+      # The slim IPA has no game data inside, so the game data image is
+      # saved as a second download. Without this step the cleanup step at
+      # the end would delete it.
+      - name: Show game data files (for troubleshooting)
+        if: always()
+        shell: bash
+        run: |
+          find "$RUNNER_TEMP/GameFiles" -maxdepth 5 \( -iname '*romfs*' -o -iname '*.ipa' \) -exec ls -lh {} \; 2>/dev/null || true
+
+      - name: Upload game data (RomFS image)
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: NxNative-RomFS-Image
+          path: |
+            ${{ runner.temp }}/GameFiles/*_build/extract/**/RomFS.img
+            ${{ runner.temp }}/GameFiles/*_build/extract/**/romfs.img
+          if-no-files-found: warn
+          retention-days: 3
+          compression-level: 0
 
       - name: Upload build logs if available
         if: always()
